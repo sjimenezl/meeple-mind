@@ -18,6 +18,7 @@ class Variant:
 
 @strawberry.type
 class Game:
+    id: str
     title: str
     min_players: int
     max_players: int

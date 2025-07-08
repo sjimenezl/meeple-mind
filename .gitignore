@@ -34,3 +34,4 @@ venv.bak/
 *.toml
 
 .DS_STORE
+.vscode
