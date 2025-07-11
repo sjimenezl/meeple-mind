@@ -4,26 +4,55 @@ from strawberry.types import Info
 from bson import ObjectId, errors as bson_errors
 from typing import Optional
 
-#TODO: normalize inputs with optionals
+
+def setup_input_to_dict(setup):
+    return {
+        "player_count": setup.player_count,
+        "components": [component_input_to_dict(c) for c in setup.components]
+}
+
+def variant_input_to_dict(variant):
+    return {
+        "title": variant.title,
+        "description": variant.description
+}
+
+def component_input_to_dict(component):
+    return {
+        "name": component.name,
+        "quantity": component.quantity
+}
+
+
 
 async def add_game(game: GameInput, info: Info) -> Game:
     request = info.context["request"]
     db = request.state.db
+
+    # Convert setup objects to dicts
+    setup_list = [setup_input_to_dict(s) for s in game.setup]
+
+    # Convert variants if any
+    variants_list = None
+    if game.variants is not None:
+        variants_list = [variant_input_to_dict(v) for v in game.variants]
 
     game_dict = {
         "title": game.title,
         "min_players": game.min_players,
         "max_players": game.max_players,
         "playtime": game.playtime,
+        "setup": setup_list,
         "rules_summary": game.rules_summary,
+        "variants": variants_list
     }
 
     res = await db.games.insert_one(game_dict)
     game_dict["_id"] = res.inserted_id
-    # replace _id for id
     game_dict["id"] = str(game_dict.pop("_id"))
 
     return Game(**game_dict)
+
 
 async def delete_game(id: str, info: Info) -> Optional[Game]:
     request = info.context["request"]
@@ -53,15 +82,21 @@ async def update_game(id: str, game: GameInput, info: Info) -> Optional[Game]:
     
     filter_query = {"_id": obj_id}
 
+    update_fields = {
+        "title": game.title,
+        "min_players": game.min_players,
+        "max_players": game.max_players,
+        "playtime": game.playtime,
+        "rules_summary": game.rules_summary,
+        "setup": game.setup
+    }
+
+    if game.variants is not None:
+        update_fields["variants"] = game.variants
+
     updated_game = await db.games.find_one_and_update(
         filter_query,
-        {"$set": {
-            "title": game.title,
-            "min_players": game.min_players,
-            "max_players": game.max_players,
-            "playtime": game.playtime,
-            "rules_summary": game.rules_summary
-        }},
+        {"$set": update_fields},
         return_document=True
     )
 
@@ -99,9 +134,9 @@ async def get_boardgames(info: Info) -> list[Game]:
             title=doc["title"],
             min_players=doc["min_players"],
             max_players=doc["max_players"],
-            playtime=doc.get("playtime"),
-            rules_summary=doc.get("rules_summary"),
-            setup=doc.get("setup"),
+            playtime=doc["playtime"],
+            rules_summary=doc["rules_summary"],
+            setup=doc["setup"],
             variants=doc.get("variants"),
         )
         for doc in docs

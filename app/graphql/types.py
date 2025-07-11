@@ -23,9 +23,24 @@ class Game:
     min_players: int
     max_players: int
     playtime: int
-    setup: Optional[list[Setup]] = None
-    rules_summary: Optional[str] = None
+    setup: list[Setup]
+    rules_summary: str
     variants: Optional[List[Variant]] = None
+
+@strawberry.input
+class ComponentInput:
+    name: str
+    quantity: int
+
+@strawberry.input
+class SetupInput:
+    player_count: int
+    components: List[ComponentInput]
+
+@strawberry.input
+class VariantInput:
+    title: str
+    description: str
 
 @strawberry.input
 class GameInput:
@@ -33,4 +48,6 @@ class GameInput:
     min_players: int
     max_players: int
     playtime: int
-    rules_summary: Optional[str] = None
+    setup: list[SetupInput]
+    rules_summary: str
+    variants: Optional[List[VariantInput]] = None
