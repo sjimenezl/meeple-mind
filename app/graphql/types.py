@@ -35,6 +35,12 @@ class GeneralRule:
     description: str
 
 @strawberry.type
+class ScoringRule:
+    description: str
+    points: Optional[int] = None
+    dynamic: Optional[str] = None  # e.g. "X points per 3 rows of 4"
+
+@strawberry.type
 class Game:
     id: str
     title: str
@@ -49,6 +55,9 @@ class Game:
     start_player_condition: str
     turn_structure: list[TurnStructure]
     player_count_rules: Optional[List[PlayerCountRules]] = None
+    scoring_rules: Optional[List[ScoringRule]] = None
+    win_condition: str
+    draw_condition: str
     end_condition: str
     variants: Optional[List[Variant]] = None
 
@@ -87,6 +96,12 @@ class GeneralRuleInput:
     description: str
 
 @strawberry.input
+class ScoringRuleInput:
+    description: str
+    points: Optional[int] = None
+    dynamic: Optional[str] = None
+
+@strawberry.input
 class GameInput:
     title: str
     goal: str
@@ -100,5 +115,8 @@ class GameInput:
     start_player_condition: str
     turn_structure: list[TurnStructureInput]
     player_count_rules: Optional[List[PlayerCountRulesInput]] = None
+    scoring_rules: Optional[List[ScoringRuleInput]] = None
+    win_condition: str
+    draw_condition: str
     end_condition: str
     variants: Optional[List[VariantInput]] = None

@@ -1,4 +1,4 @@
-from app.graphql.types import Game, GameInput
+from app.graphql.types import Component, Game, GameInput, GeneralRule, PlayerCountRules, ScoringRule, Setup, SetupInstructions, TurnStructure, Variant
 import strawberry
 from strawberry.types import Info
 from bson import ObjectId, errors as bson_errors
@@ -43,7 +43,52 @@ def player_count_rules_input_to_dict(player_rules):
 def general_rule_input_to_dict(rule):
     return {"description": rule.description}
 
+def dict_to_component(d: dict) -> Component:
+    return Component(
+        name=d["name"],
+        quantity=d["quantity"]
+    )
 
+def dict_to_setup(d: dict) -> Setup:
+    return Setup(
+        player_count=d["player_count"],
+        components=[dict_to_component(c) for c in d["components"]]
+    )
+
+def dict_to_turn_structure(d: dict) -> TurnStructure:
+    return TurnStructure(
+        steps=d["steps"]
+    )
+
+def dict_to_setup_instruction(d: dict) -> SetupInstructions:
+    return SetupInstructions(
+        description=d["description"],
+        setup_number=d["setup_number"]
+    )
+
+def dict_to_player_count_rule(d: dict) -> PlayerCountRules:
+    return PlayerCountRules(
+        player_count=d["player_count"],
+        notes=d["notes"]
+    )
+
+def dict_to_variant(d: dict) -> Variant:
+    return Variant(
+        title=d["title"],
+        description=d["description"]
+    )
+
+def dict_to_general_rule(d: dict) -> GeneralRule:
+    return GeneralRule(
+        description=d["description"]
+    )
+
+def dict_to_scoring_rule(d: dict) -> ScoringRule:
+    return ScoringRule(
+        description=d["description"],
+        points=d.get("points"),
+        dynamic=d.get("dynamic")
+    )
 
 async def add_game(game: GameInput, info: Info) -> Game:
     request = info.context["request"]
@@ -81,6 +126,8 @@ async def add_game(game: GameInput, info: Info) -> Game:
         "start_player_condition": game.start_player_condition,
         "turn_structure": turn_structure_list,
         "player_count_rules": player_count_rules_list,
+        "win_condition": game.win_condition,
+        "draw_condition": game.draw_condition,
         "end_condition": game.end_condition,
         "variants": variants_list
     }
@@ -129,6 +176,8 @@ async def update_game(id: str, game: GameInput, info: Info) -> Optional[Game]:
         "rules_summary": game.rules_summary,
         "setup": [setup_input_to_dict(s) for s in game.setup],
         "start_player_condition": game.start_player_condition,
+        "win_condition": game.win_condition,
+        "draw_condition": game.draw_condition,
         "end_condition": game.end_condition
     }
 
@@ -185,12 +234,22 @@ async def get_boardgames(info: Info) -> list[Game]:
         Game(
             id=str(doc["_id"]),
             title=doc["title"],
+            goal=doc["goal"],
+            general_rules=[dict_to_general_rule(r) for r in doc.get("general_rules", [])] if doc.get("general_rules") else None,
             min_players=doc["min_players"],
             max_players=doc["max_players"],
             playtime=doc["playtime"],
+            setup=[dict_to_setup(s) for s in doc["setup"]],
+            setup_instructions=[dict_to_setup_instruction(i) for i in doc.get("setup_instructions", [])] if doc.get("setup_instructions") else None,
             rules_summary=doc["rules_summary"],
-            setup=doc["setup"],
-            variants=doc.get("variants"),
+            start_player_condition=doc["start_player_condition"],
+            turn_structure=[dict_to_turn_structure(t) for t in doc["turn_structure"]],
+            player_count_rules=[dict_to_player_count_rule(p) for p in doc.get("player_count_rules", [])] if doc.get("player_count_rules") else None,
+            scoring_rules=[dict_to_scoring_rule(r) for r in doc.get("scoring_rules", [])] if doc.get("scoring_rules") else None,
+            win_condition=doc["win_condition"],
+            draw_condition=doc["draw_condition"],
+            end_condition=doc["end_condition"],
+            variants=[dict_to_variant(v) for v in doc.get("variants", [])] if doc.get("variants") else None,
         )
         for doc in docs
     ]
