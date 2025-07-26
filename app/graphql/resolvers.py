@@ -1,94 +1,10 @@
-from app.graphql.types import Component, Game, GameInput, GeneralRule, PlayerCountRules, ScoringRule, Setup, SetupInstructions, TurnStructure, Variant
+from app.graphql.types import Game, GameInput
 import strawberry
 from strawberry.types import Info
 from bson import ObjectId, errors as bson_errors
 from typing import Optional
 
-
-def setup_input_to_dict(setup):
-    return {
-        "player_count": setup.player_count,
-        "components": [component_input_to_dict(c) for c in setup.components]
-}
-
-def variant_input_to_dict(variant):
-    return {
-        "title": variant.title,
-        "description": variant.description
-}
-
-def component_input_to_dict(component):
-    return {
-        "name": component.name,
-        "quantity": component.quantity
-}
-
-def setup_instructions_input_to_dict(instructions):
-    return {
-        "description": instructions.description,
-        "setup_number": instructions.setup_number
-    }
-
-def turn_structure_input_to_dict(structure):
-    return {
-        "steps": structure.steps
-    }
-
-def player_count_rules_input_to_dict(player_rules):
-    return {
-        "player_count": player_rules.player_count,
-        "notes": player_rules.notes
-    }
-
-def general_rule_input_to_dict(rule):
-    return {"description": rule.description}
-
-def dict_to_component(d: dict) -> Component:
-    return Component(
-        name=d["name"],
-        quantity=d["quantity"]
-    )
-
-def dict_to_setup(d: dict) -> Setup:
-    return Setup(
-        player_count=d["player_count"],
-        components=[dict_to_component(c) for c in d["components"]]
-    )
-
-def dict_to_turn_structure(d: dict) -> TurnStructure:
-    return TurnStructure(
-        steps=d["steps"]
-    )
-
-def dict_to_setup_instruction(d: dict) -> SetupInstructions:
-    return SetupInstructions(
-        description=d["description"],
-        setup_number=d["setup_number"]
-    )
-
-def dict_to_player_count_rule(d: dict) -> PlayerCountRules:
-    return PlayerCountRules(
-        player_count=d["player_count"],
-        notes=d["notes"]
-    )
-
-def dict_to_variant(d: dict) -> Variant:
-    return Variant(
-        title=d["title"],
-        description=d["description"]
-    )
-
-def dict_to_general_rule(d: dict) -> GeneralRule:
-    return GeneralRule(
-        description=d["description"]
-    )
-
-def dict_to_scoring_rule(d: dict) -> ScoringRule:
-    return ScoringRule(
-        description=d["description"],
-        points=d.get("points"),
-        dynamic=d.get("dynamic")
-    )
+from app.helper.helpers import *
 
 async def add_game(game: GameInput, info: Info) -> Game:
     request = info.context["request"]
@@ -107,6 +23,11 @@ async def add_game(game: GameInput, info: Info) -> Game:
     if game.setup_instructions is not None:
         setup_instructions_list = [setup_instructions_input_to_dict(si) for si in game.setup_instructions]
 
+    # Convert geenral rules if any
+    general_rules_list = None
+    if game.general_rules is not None:
+        general_rules_list = [general_rule_input_to_dict(gr) for gr in game.general_rules]
+
     turn_structure_list = [turn_structure_input_to_dict(t) for t in game.turn_structure]
 
     player_count_rules_list = None
@@ -116,7 +37,7 @@ async def add_game(game: GameInput, info: Info) -> Game:
     game_dict = {
         "title": game.title,
         "goal": game.goal,
-        "general_rules": game.general_rules,
+        "general_rules": general_rules_list,
         "min_players": game.min_players,
         "max_players": game.max_players,
         "playtime": game.playtime,
@@ -209,6 +130,8 @@ async def update_game(id: str, game: GameInput, info: Info) -> Optional[Game]:
     return None
 
 ### Queries ###
+
+# TODO: FIND A CLEANER VERSION OF THIS MESS
 async def get_boardgame_by_id(id: str, info: Info) -> Optional[Game]:
     request = info.context["request"]
     db = request.state.db
@@ -222,6 +145,13 @@ async def get_boardgame_by_id(id: str, info: Info) -> Optional[Game]:
 
     if game_dict:
         game_dict["id"] = str(game_dict.pop("_id"))
+        game_dict["general_rules"] = [dict_to_general_rule(r) for r in game_dict.get("general_rules", [])] if game_dict.get("general_rules") else None
+        game_dict["setup"] = [dict_to_setup(s) for s in game_dict["setup"]]
+        game_dict["setup_instructions"] = [dict_to_setup_instruction(i) for i in game_dict.get("setup_instructions", [])] if game_dict.get("setup_instructions") else None
+        game_dict["turn_structure"] = [dict_to_turn_structure(t) for t in game_dict["turn_structure"]]
+        game_dict["player_count_rules"] = [dict_to_player_count_rule(p) for p in game_dict.get("player_count_rules", [])] if game_dict.get("player_count_rules") else None
+        game_dict["scoring_rules"] = [dict_to_scoring_rule(r) for r in game_dict.get("scoring_rules", [])] if game_dict.get("scoring_rules") else None
+        game_dict["variants"] = [dict_to_variant(v) for v in game_dict.get("variants", [])] if game_dict.get("variants") else None
         return Game(**game_dict)
 
     return None
