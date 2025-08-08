@@ -1,122 +1,80 @@
 from typing import Optional, List
 import strawberry
 
-@strawberry.type
-class TurnStructure:
-    steps: List[str]
+from strawberry.experimental.pydantic import type as pydantic_type
+from strawberry.experimental.pydantic import input as pydantic_input
 
-@strawberry.type
+from app.models.models import *
+
+@pydantic_type(model=ComponentModel, all_fields=True)
 class Component:
-    name: str
-    quantity: int
+    pass
 
-@strawberry.type
+@pydantic_type(model=SetupModel, all_fields=True)
 class Setup:
-    player_count: int
-    components: List[Component]
+    pass
 
-@strawberry.type
+@pydantic_type(model=SetupInstructionsModel, all_fields=True)
 class SetupInstructions:
-    description: str
-    setup_number: int
+    pass
 
-@strawberry.type
+@pydantic_type(model=VariantModel, all_fields=True)
 class Variant:
-    title: str
-    description: str
+    pass
 
-@strawberry.type
+@pydantic_type(model=PlayerCountRulesModel, all_fields=True)
 class PlayerCountRules:
-    player_count: int
-    notes: str
+    pass
 
-@strawberry.type
+@pydantic_type(model=GeneralRuleModel, all_fields=True)
 class GeneralRule:
-    description: str
+    pass
 
-@strawberry.type
+@pydantic_type(model=ScoringRuleModel, all_fields=True)
 class ScoringRule:
-    description: str
-    points: Optional[int] = None
-    dynamic: Optional[str] = None  # e.g. "X points per 3 rows of 4"
+    pass
 
-@strawberry.type
+@pydantic_type(model=TurnStructureModel, all_fields=True)
+class TurnStructure:
+    pass
+
+@pydantic_type(model=GameModel, all_fields=True)
 class Game:
-    id: str
-    title: str
-    goal: str
-    general_rules: Optional[List[GeneralRule]] = None
-    min_players: int
-    max_players: int
-    playtime: int
-    setup: list[Setup]
-    setup_instructions: Optional[List[SetupInstructions]] = None
-    rules_summary: str
-    start_player_condition: str
-    turn_structure: list[TurnStructure]
-    player_count_rules: Optional[List[PlayerCountRules]] = None
-    scoring_rules: Optional[List[ScoringRule]] = None
-    win_condition: str
-    draw_condition: str
-    end_condition: str
-    variants: Optional[List[Variant]] = None
+    pass
 
 # Game inputs, mostly for insertions
-@strawberry.input
+@pydantic_input(model=TurnStructureModel, all_fields=True)
 class TurnStructureInput:
-    steps: List[str]
+    pass
 
-@strawberry.input
-class ComponentInput:
-    name: str
-    quantity: int
+@pydantic_input(model=ComponentModel, all_fields=True)
+class ComponentInput: 
+    pass
 
-@strawberry.input
-class SetupInput:
-    player_count: int
-    components: List[ComponentInput]
+@pydantic_input(model=SetupModel, all_fields=True)
+class SetupInput: 
+    pass
 
-@strawberry.input
+@pydantic_input(model=SetupInstructionsModel, all_fields=True)
 class SetupInstructionsInput:
-    description: str
-    setup_number: int
+    pass
 
-@strawberry.input
+@pydantic_input(model=VariantModel, all_fields=True)
 class VariantInput:
-    title: str
-    description: str
+    pass
 
-@strawberry.input
+@pydantic_input(model=PlayerCountRulesModel, all_fields=True)
 class PlayerCountRulesInput:
-    player_count: int
-    notes: str
+    pass
 
-@strawberry.input
+@pydantic_input(model=GeneralRuleModel, all_fields=True)
 class GeneralRuleInput:
-    description: str
+    pass
 
-@strawberry.input
+@pydantic_input(model=ScoringRuleModel, all_fields=True)
 class ScoringRuleInput:
-    description: str
-    points: Optional[int] = None
-    dynamic: Optional[str] = None
+    pass
 
-@strawberry.input
+@pydantic_input(model=GameModelInput, all_fields=True)
 class GameInput:
-    title: str
-    goal: str
-    general_rules: Optional[List[GeneralRuleInput]] = None
-    min_players: int
-    max_players: int
-    playtime: int
-    setup: list[SetupInput]
-    setup_instructions: Optional[List[SetupInstructionsInput]] = None
-    rules_summary: str
-    start_player_condition: str
-    turn_structure: list[TurnStructureInput]
-    player_count_rules: Optional[List[PlayerCountRulesInput]] = None
-    scoring_rules: Optional[List[ScoringRuleInput]] = None
-    win_condition: str
-    draw_condition: str
-    end_condition: str
-    variants: Optional[List[VariantInput]] = None
+    pass
